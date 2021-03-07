@@ -12,15 +12,17 @@ function loadEnv(name: string): string {
 
 const app = express()
 app.get('/', (req, res) => {
-  console.log(req.body)
-  res.status(200)
+  res.json({ message: 'hello' })
 })
 
 const middleware = line.middleware({
   channelAccessToken: loadEnv('CHANNEL_ACCESS_TOKEN'),
   channelSecret: loadEnv('CHANNEL_SECRET'),
 })
-app.post('/webhook', middleware, )
+app.post('/webhook', middleware, (req, res) => {
+  console.log(req.body)
+  res.status(200)
+})
 
 const port = process.env.PORT || 5000
 app.listen(port, () => {

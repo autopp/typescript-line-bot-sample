@@ -21,7 +21,7 @@ const lineMiddleware = middleware({
 })
 app.post('/webhook', lineMiddleware, (req, res) => {
   console.log(req.body)
-  res.status(200)
+  res.sendStatus(200)
 })
 
 const port = process.env.PORT || 5000

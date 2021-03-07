@@ -1,5 +1,5 @@
 import express from 'express'
-import line from '@line/bot-sdk'
+import { middleware } from '@line/bot-sdk'
 
 function loadEnv(name: string): string {
   const v = process.env[name]
@@ -15,11 +15,11 @@ app.get('/', (req, res) => {
   res.json({ message: 'hello' })
 })
 
-const middleware = line.middleware({
+const lineMiddleware = middleware({
   channelAccessToken: loadEnv('CHANNEL_ACCESS_TOKEN'),
   channelSecret: loadEnv('CHANNEL_SECRET'),
 })
-app.post('/webhook', middleware, (req, res) => {
+app.post('/webhook', lineMiddleware, (req, res) => {
   console.log(req.body)
   res.status(200)
 })

@@ -1,5 +1,5 @@
 import express, { Request } from 'express'
-import { middleware, Client, WebhookRequestBody, WebhookEvent, MessageEvent, TextEventMessage } from '@line/bot-sdk'
+import { middleware, Client, WebhookRequestBody, WebhookEvent, MessageEvent, TextEventMessage, FollowEvent } from '@line/bot-sdk'
 
 function loadEnv(name: string): string {
   const v = process.env[name]
@@ -10,12 +10,19 @@ function loadEnv(name: string): string {
   return v
 }
 
-type TextMessageEvent = {
-  message: TextEventMessage
-} & MessageEvent
+function handleMessageEvent(event: MessageEvent) {
+  if (event.message.type !== "text") {
+    return
+  }
 
-function isTextMessageEvent(event: WebhookEvent): event is TextMessageEvent {
-  return event.type === "message" && event.message.type === "text"
+  return bot.replyMessage(event.replyToken, { type: "text", text: `echo: ${event.message.text}` })
+}
+
+async function handleFollowEvent(event: FollowEvent) {
+  const profile = event.source.userId !== undefined ? await bot.getProfile(event.source.userId) : undefined
+  const message = profile !== undefined ? `hello ${profile.displayName}` : "hello new user"
+
+  return bot.replyMessage(event.replyToken, { type: "text", text: message })
 }
 
 const app = express()
@@ -33,10 +40,14 @@ app.post('/webhook', lineMiddleware, (req: Request<{}, {}, WebhookRequestBody>, 
   console.log(req.body);
   res.sendStatus(200);
 
-  req.body.events.filter
-  const replies = req.body.events.filter(isTextMessageEvent).map((event) =>
-    bot.replyMessage(event.replyToken, { type: "text", text: `echo: ${event.message.text}` })
-  )
+  const replies = req.body.events.map((event) => {
+    if (event.type === "message") {
+      return handleMessageEvent(event)
+    }
+    if (event.type === "follow") {
+      return handleFollowEvent(event)
+    }
+  })
 
   Promise.allSettled(replies).then((results) => {
     results.forEach((r) => {
